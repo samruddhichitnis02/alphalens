@@ -48,6 +48,12 @@ flowchart TD
 
 ---
 
+## Interactive Workflow Demo
+
+![AlphaLens LangGraph State Machine Demo](assets/workflow_demo.svg)
+
+---
+
 ## Key Features
 
 1. **Section-Aware SEC Parsing**:
@@ -68,20 +74,16 @@ flowchart TD
 
 ---
 
-## Institutional Coverage Universe
-
-Configured in [`config/companies.yaml`](file:///c:/Users/samru/Study/Study_Abroad/Universities/FTE/Projects/Alphalens/config/companies.yaml):
-- **Technology:** Apple (`AAPL`), Microsoft (`MSFT`), NVIDIA (`NVDA`), Amazon (`AMZN`), Meta (`META`)
-- **Financials & Healthcare:** JPMorgan Chase (`JPM`), Pfizer (`PFE`)
-- **Consumer, Energy & Auto:** Tesla (`TSLA`), Walmart (`WMT`), ExxonMobil (`XOM`)
-
----
-
 ## Reproducible Benchmark Results
 
 *The following metrics were computed directly on the 59-question human-verified evaluation dataset using `make eval`:*
 
 ### 1. Retrieval Strategy Benchmark (BM25 vs. Semantic vs. Hybrid)
+
+<p align="center">
+  <img src="assets/retrieval_benchmark.png" alt="Retrieval Strategy Benchmark" width="750" />
+</p>
+
 | Retrieval Method | Recall@5 | Recall@10 | MRR | nDCG@10 |
 | :--- | :--- | :--- | :--- | :--- |
 | **BM25 Lexical** | 1.0000 | 1.0000 | 0.9762 | 2.1103 |
@@ -89,6 +91,7 @@ Configured in [`config/companies.yaml`](file:///c:/Users/samru/Study/Study_Abroa
 | **Hybrid (BM25 + kNN + RRF)** | **0.9796** | **1.0000** | **0.9626** | **2.1026** |
 
 ### 2. Generation & Citation Correctness
+
 | Metric | Measured Value | Definition |
 | :--- | :--- | :--- |
 | **Citation Correctness** | **100.0%** (1.00) | Proportion of cited chunk IDs that exist in retrieved evidence set. |
@@ -100,6 +103,11 @@ Configured in [`config/companies.yaml`](file:///c:/Users/samru/Study/Study_Abroa
 ### 3. Ablation Experiments
 
 #### A. Chunk Size Tuning
+
+<p align="center">
+  <img src="assets/chunk_size_tuning.png" alt="Chunk Size Tuning vs Latency" width="700" />
+</p>
+
 | Chunk Size | Recall@10 | p50 Latency | Factual Grounding |
 | :--- | :--- | :--- | :--- |
 | 256 tokens | 0.842 | 0.18s | 0.91 |
@@ -107,6 +115,11 @@ Configured in [`config/companies.yaml`](file:///c:/Users/samru/Study/Study_Abroa
 | 1024 tokens | 0.887 | 0.31s | 0.93 |
 
 #### B. Metadata Filtering Impact
+
+<p align="center">
+  <img src="assets/metadata_filtering.png" alt="Metadata Filtering Impact" width="600" />
+</p>
+
 | Setting | Recall@10 | Precision@5 | Latency |
 | :--- | :--- | :--- | :--- |
 | **Metadata Filtering ON (Ticker + Section)** | **0.933** | **0.88** | **0.22s** |
