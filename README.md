@@ -50,7 +50,26 @@ flowchart TD
 
 ## Interactive Workflow Demo
 
-![AlphaLens LangGraph State Machine Demo](assets/workflow_demo.svg)
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  AlphaLens Research Terminal - LangGraph State Orchestrator                            │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  analyst@alphalens:~$ curl -X POST /api/v1/ask                                         │
+│    -d '{"query": "Compare Azure vs AWS enterprise AI growth", "method": "hybrid"}'     │
+│                                                                                        │
+│  [Node 1: Query Router] Identified entities: [MSFT, AMZN] | cross_company_comparison   │
+│  [Node 2: Retrieval]    Balanced dual-lane retrieval (BM25 + kNN, RRF fused):          │
+│    ├── [c-msft-7a1] MSFT 10-K Item 7 (MD&A) - Azure enterprise revenue acceleration    │
+│    └── [c-amzn-9b4] AMZN 10-K Item 7 (MD&A) - AWS multi-billion enterprise AI adoption │
+│                                                                                        │
+│  [Node 4: Claude Gen]   Synthesized response citing passages:                          │
+│    "Microsoft reported Azure revenue growth accelerated by AI services [c-msft-7a1],   │
+│     while Amazon highlighted AWS Bedrock enterprise expansion [c-amzn-9b4]."           │
+│                                                                                        │
+│  [Node 5: Verifier]     ✓ Verified 2/2 citations exist in retrieved set (100% correct) │
+│  [Audit Guard]          ✓ Verbatim Quote Integrity Passed | 31ms Latency | $0 API Cost │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -80,9 +99,18 @@ flowchart TD
 
 ### 1. Retrieval Strategy Benchmark (BM25 vs. Semantic vs. Hybrid)
 
-<p align="center">
-  <img src="assets/retrieval_benchmark.png" alt="Retrieval Strategy Benchmark" width="750" />
-</p>
+```mermaid
+gantt
+    title Retrieval Recall@10 Score Comparison
+    dateFormat X
+    axisFormat %s%%
+    section BM25 Lexical
+    100% Recall : 0, 100
+    section Semantic kNN
+    97.9% Recall : 0, 98
+    section Hybrid (Selected)
+    100% Recall : 0, 100
+```
 
 | Retrieval Method | Recall@5 | Recall@10 | MRR | nDCG@10 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -104,9 +132,12 @@ flowchart TD
 
 #### A. Chunk Size Tuning
 
-<p align="center">
-  <img src="assets/chunk_size_tuning.png" alt="Chunk Size Tuning vs Latency" width="700" />
-</p>
+```
+Chunk Size vs Recall & Latency Tradeoff:
+  256 tokens  |  [████████████████████] 84.2% Recall@10  |  180ms Latency
+  512 tokens  |  [███████████████████████] 93.3% (Optimal) |  220ms Latency  <-- Selected
+ 1024 tokens  |  [█████████████████████] 88.7% Recall@10  |  310ms Latency
+```
 
 | Chunk Size | Recall@10 | p50 Latency | Factual Grounding |
 | :--- | :--- | :--- | :--- |
@@ -116,9 +147,11 @@ flowchart TD
 
 #### B. Metadata Filtering Impact
 
-<p align="center">
-  <img src="assets/metadata_filtering.png" alt="Metadata Filtering Impact" width="600" />
-</p>
+```
+Precision@5 with Metadata Constraints:
+  Metadata Filtering ON   |  [██████████████████████] 88.0% Precision@5  <-- Enforces Ticker + Section
+  Metadata Filtering OFF  |  [███████████████] 61.0% Precision@5        (Unconstrained Search)
+```
 
 | Setting | Recall@10 | Precision@5 | Latency |
 | :--- | :--- | :--- | :--- |
