@@ -10,13 +10,6 @@
 
 ---
 
-## Demo Walkthrough
-
-<p align="center">
-  <img src="assets/demo.gif" alt="AlphaLens Live Demo" width="700" />
-</p>
-
----
 
 ## Architecture Overview
 
