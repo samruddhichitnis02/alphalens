@@ -1,0 +1,48 @@
+# AlphaLens Target Companies
+# 10 Institutional Coverage Universe across 3 Sectors
+sectors:
+  - name: "Technology"
+    companies:
+      - ticker: "AAPL"
+        name: "Apple Inc."
+        cik: "0000320193"
+      - ticker: "MSFT"
+        name: "Microsoft Corp."
+        cik: "0000789019"
+      - ticker: "NVDA"
+        name: "NVIDIA Corp."
+        cik: "0001045810"
+      - ticker: "AMZN"
+        name: "Amazon.com Inc."
+        cik: "0001018724"
+      - ticker: "META"
+        name: "Meta Platforms Inc."
+        cik: "0001326801"
+
+  - name: "Financials & Healthcare"
+    companies:
+      - ticker: "JPM"
+        name: "JPMorgan Chase & Co."
+        cik: "0000019617"
+      - ticker: "PFE"
+        name: "Pfizer Inc."
+        cik: "0000078003"
+
+  - name: "Consumer & Energy & Auto"
+    companies:
+      - ticker: "TSLA"
+        name: "Tesla Inc."
+        cik: "0001318605"
+      - ticker: "WMT"
+        name: "Walmart Inc."
+        cik: "0000104169"
+      - ticker: "XOM"
+        name: "Exxon Mobil Corp."
+        cik: "0000034088"
+
+# Coverage Filing Parameters
+coverage:
+  years_10k: 3
+  quarters_10q: 6
+  months_8k: 12
+

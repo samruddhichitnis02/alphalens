@@ -1,0 +1,22 @@
+# Environments & Caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Local databases & SEC downloads
+data/raw_filings/
+data/alphalens.db
+*.db
+*.sqlite3
+
+# Secrets
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
