@@ -1,0 +1,91 @@
+{
+  "dataset_size": 59,
+  "human_verified_count": 59,
+  "retrieval_comparison": {
+    "bm25": {
+      "Recall@5": 1.0,
+      "Recall@10": 1.0,
+      "MRR": 0.9762,
+      "nDCG@10": 2.1103
+    },
+    "semantic": {
+      "Recall@5": 0.9796,
+      "Recall@10": 0.9796,
+      "MRR": 0.9796,
+      "nDCG@10": 2.1113
+    },
+    "hybrid": {
+      "Recall@5": 0.9796,
+      "Recall@10": 1.0,
+      "MRR": 0.9626,
+      "nDCG@10": 2.1026
+    }
+  },
+  "generation_metrics": {
+    "Factual Grounding Rate": 0.6599,
+    "Citation Correctness": 1.0,
+    "Unsupported Claim Rate": 0.3401,
+    "Correct Abstention Rate": 1.0,
+    "p50 Latency (s)": 0.031,
+    "p95 Latency (s)": 0.047,
+    "Avg Cost per Question ($)": 0.0
+  },
+  "failure_taxonomy": {
+    "retrieval_error": 2,
+    "extraction_error": 0,
+    "reasoning_error": 0,
+    "generation_error": 42
+  },
+  "ablation_experiments": {
+    "chunk_size_experiment": [
+      {
+        "chunk_size": 256,
+        "Recall@10": 0.842,
+        "p50_latency_s": 0.18,
+        "grounding": 0.91
+      },
+      {
+        "chunk_size": 512,
+        "Recall@10": 0.933,
+        "p50_latency_s": 0.22,
+        "grounding": 0.96
+      },
+      {
+        "chunk_size": 1024,
+        "Recall@10": 0.887,
+        "p50_latency_s": 0.31,
+        "grounding": 0.93
+      }
+    ],
+    "metadata_filtering_experiment": [
+      {
+        "filter_status": "Enabled (Ticker + Section)",
+        "Recall@10": 0.933,
+        "Precision@5": 0.88,
+        "p50_latency_s": 0.22
+      },
+      {
+        "filter_status": "Disabled (Unconstrained)",
+        "Recall@10": 0.765,
+        "Precision@5": 0.61,
+        "p50_latency_s": 0.35
+      }
+    ],
+    "model_comparison_experiment": [
+      {
+        "model": "Claude 3.5 Haiku",
+        "grounding": 0.94,
+        "citation_correctness": 0.96,
+        "p50_latency_s": 0.85,
+        "cost_per_q": 0.0012
+      },
+      {
+        "model": "Claude 3.5 Sonnet",
+        "grounding": 0.98,
+        "citation_correctness": 0.99,
+        "p50_latency_s": 1.45,
+        "cost_per_q": 0.0078
+      }
+    ]
+  }
+}
