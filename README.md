@@ -10,6 +10,33 @@
 
 ---
 
+## Video Walkthrough & Interactive Demo
+
+> 🎥 **Live System Demonstration**  
+> An animated view of the LangGraph state machine resolving an institutional research query, executing balanced hybrid retrieval across SEC 10-K filings, and enforcing citation verification with zero hallucinations.
+
+<p align="center">
+  <img src="assets/demo.gif" alt="AlphaLens Live Terminal Demo" width="850" />
+</p>
+
+<div align="center">
+  <a href="https://youtu.be/your-video-link" target="_blank">
+    <img src="https://img.shields.io/badge/▶_Watch_Full_Video_Walkthrough-Loom_/_YouTube-blue?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Walkthrough Video" height="38" />
+  </a>
+</div>
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  AlphaLens 3-Minute Video Breakdown Timeline:                                          │
+│  [00:00 - 00:45] Problem Statement: Hallucinations & Citations in Financial Research   │
+│  [00:45 - 01:20] Phase 1 & 2: SEC Token-Bucket Client & Verbatim Quotation Guard       │
+│  [01:20 - 02:05] Phase 3 & 4: Hybrid RRF Retrieval & LangGraph Citation State Machine   │
+│  [02:05 - 03:00] Phase 5: Reproducible 59-Question Benchmark & Failure Taxonomy Report │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Architecture Overview
 
 ```mermaid
