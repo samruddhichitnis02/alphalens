@@ -1,251 +1,285 @@
-# AlphaLens: Investment Research Intelligence System
+<div align="center">
+
+# AlphaLens
+
+**Ask questions about company reports. Get answers with proof.**
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-green.svg)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-StateGraph-orange.svg)](https://github.com/langchain-ai/langgraph)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-workflow-orange.svg)](https://github.com/langchain-ai/langgraph)
+[![Runs locally](https://img.shields.io/badge/runs-100%25%20locally-success.svg)](#-run-it-yourself)
 
-> **Production-minded, measurable investment research intelligence over SEC EDGAR filings (10-K, 10-Q, 8-K) built for institutional asset managers.**  
-> Every metric reported in this repo is generated live from evaluation scripts and reproducible with `make eval`.
+<img src="assets/explainer.gif" alt="50-second explainer: what AlphaLens does, in five steps" width="760" />
+
+<sub>▶ 50-second explainer · <a href="assets/explainer.mp4">download the sharper MP4</a></sub>
+
+</div>
 
 ---
 
+## 🧭 What is this, in plain words?
 
-## Architecture Overview
+Every public company in the US has to publish long reports with the government (the **SEC**). They explain how the business is doing, how much money it made, and what could go wrong. Each report can run to **hundreds of pages**, and investors have to read stacks of them.
+
+**AlphaLens reads those reports for you.** You type a question in normal English, like:
+
+> *"How did Apple's Services revenue change in 2023?"*
+> *"Compare the AI risks Microsoft and Amazon warn about."*
+
+AlphaLens finds the exact paragraphs that answer it and writes a short answer. **Every sentence points to where it came from**, so you can check it yourself. If the reports don't contain the answer, it says so instead of making something up.
+
+Think of it as a very careful research assistant. It always shows its sources and never guesses.
+
+### Who is it for?
+
+- **Investment analysts** who need facts from filings quickly and need to trust them.
+- **Students and learners** who want to see how a real RAG system (*Retrieval-Augmented Generation*: search first, then write) is built, tested, and measured.
+
+---
+
+## ⚙️ How it works: five steps
+
+```mermaid
+flowchart LR
+    A["📥 1. Download<br/>reports from the SEC"] --> B["✂️ 2. Split<br/>into sections & small pieces"]
+    B --> C["🔎 3. Search<br/>by words + by meaning"]
+    C --> D["✍️ 4. Answer<br/>with a source on every sentence"]
+    D --> E["✅ 5. Check<br/>every source is real"]
+    C -. "nothing relevant found" .-> F["🙅 Say 'not enough info'"]
+```
+
+| Step | What happens (simple version) | Where in the code |
+| :--- | :--- | :--- |
+| **1. Download** | Fetches 10-K, 10-Q and 8-K reports from the SEC's free [EDGAR](https://www.sec.gov/edgar) site, staying under the SEC's speed limit (≤ 8 requests per second) and saving copies locally. | [`src/edgar/client.py`](src/edgar/client.py) |
+| **2. Split** | Finds the report's sections (e.g. *Item 1A Risk Factors*, *Item 7 Management's Discussion*) and cuts each one into small pieces of about 400 tokens (a few paragraphs). A piece never mixes two sections. | [`src/edgar/parser.py`](src/edgar/parser.py), [`src/edgar/chunker.py`](src/edgar/chunker.py) |
+| **3. Search** | Looks for pieces two ways: **by exact words** (BM25) and **by meaning** (a small AI model turns text into numbers). It then merges both lists (RRF). For "compare A and B" questions, it searches each company separately so the bigger one doesn't drown out the other. | [`src/retrieval/`](src/retrieval/) |
+| **4. Answer** | An AI model (Claude, or a free offline stand-in) writes the answer and tags each sentence with the piece it used, like `[chunk_id]`. | [`src/workflow/graph.py`](src/workflow/graph.py) |
+| **5. Check** | A checker confirms every tag points to a piece that was actually found and flags sentences with no source. If search found nothing useful, the system first retries with a looser search, then says *"not enough information."* | [`src/workflow/graph.py`](src/workflow/graph.py) |
+
+**Bonus: fact extraction with a "no made-up quotes" rule.** AlphaLens can also pull out structured facts such as events, deals, and risks. Each fact must come with a quote, and if that quote isn't found **word-for-word** in the report, the fact is thrown away. See [`src/extraction/extractor.py`](src/extraction/extractor.py).
+
+<details>
+<summary><b>Show the detailed technical diagram</b></summary>
 
 ```mermaid
 flowchart TD
-    subgraph SEC_Ingestion ["1. Ingestion & Fair-Access Rate Limiting"]
-        SEC["SEC EDGAR API (data.sec.gov)"] -->|"Token Bucket <= 8 req/s"| Client["Async EdgarClient"]
-        Client --> Cache["Disk Cache (/data/raw_filings)"]
-        Cache --> Parser["Section-Aware HTML Parser\n(10-K / 10-Q Items & 8-K Items)"]
-        Parser --> Chunker["Token Chunker\n(300-500 tokens, strict section bounds)"]
+    subgraph Ingest ["1 · Ingestion"]
+        SEC["SEC EDGAR API"] -->|"token bucket ≤ 8 req/s"| Client["Async EdgarClient"]
+        Client --> Cache["Disk cache (data/raw_filings)"]
+        Cache --> Parser["Section-aware HTML parser<br/>(10-K/10-Q Items, 8-K Items)"]
+        Parser --> Chunker["Token chunker<br/>(stays inside section bounds)"]
     end
 
-    subgraph Storage_Layer ["2. Structured Storage & Indexing"]
-        Chunker --> Postgres[("PostgreSQL 16 / SQLite\nFilings, Sections, Chunks")]
-        Chunker --> Extractor["Claude / LLM Extractor\n(Hallucination Guard: Verbatim Quote Check)"]
-        Extractor --> ExtractedDB[("Extracted Corporate Events & Risks")]
-        Chunker --> Embedder["Local Sentence-Transformers\n(all-MiniLM-L6-v2)"]
-        Embedder --> OpenSearch[("OpenSearch / Hybrid Index\n(BM25 + kNN Dense Vectors)")]
+    subgraph Store ["2 · Storage & indexing"]
+        Chunker --> DB[("PostgreSQL / SQLite<br/>filings · sections · chunks")]
+        Chunker --> Extractor["LLM extractor<br/>+ verbatim-quote guard"]
+        Extractor --> Facts[("Extracted events & risks")]
+        Chunker --> Embed["sentence-transformers<br/>all-MiniLM-L6-v2"]
+        Embed --> Index[("OpenSearch or in-memory index<br/>BM25 + kNN")]
     end
 
-    subgraph LangGraph_Workflow ["3. LangGraph Research Workflow"]
-        UserQuery["Analyst Question"] --> Router["Node 1: Query Understanding\n(Tickers, Dates, Question Type)"]
-        Router --> Retriever["Node 2: Multi-Company Balanced Retrieval\n(BM25 + kNN + RRF Fusion)"]
-        Retriever --> EvidenceCheck{"Node 3: Evidence Check"}
-        EvidenceCheck -->|"Insufficient"| Reformulate["Reformulate Query (Relax Bounds)"]
-        Reformulate --> Retriever
-        EvidenceCheck -->|"Empty Evidence"| InsufficientAns["Abstain: Insufficient Disclosures"]
-        EvidenceCheck -->|"Sufficient"| Generator["Node 4: Claude Synthesis\n(Passage Citing [chunk_id])"]
-        Generator --> Verifier["Node 5: Citation Verifier\n(Cross-checks Chunks & Flags Uncited Claims)"]
+    subgraph Flow ["3 · LangGraph research workflow"]
+        Q["Analyst question"] --> N1["Query understanding<br/>(tickers, dates, question type)"]
+        N1 --> N2["Retrieve<br/>(BM25 + kNN + RRF, per company)"]
+        N2 --> N3{"Evidence check"}
+        N3 -->|"weak"| N3b["Reformulate query"] --> N2
+        N3 -->|"none"| Abstain["Insufficient-evidence answer"]
+        N3 -->|"enough"| N4["Generate answer<br/>with [chunk_id] citations"]
+        N4 --> N5["Verify citations<br/>flag uncited sentences"]
     end
 
-    subgraph Evaluation ["4. Reproducible Evaluation Framework"]
-        Verifier --> Benchmark["60-Question Eval Benchmark\n(5 Query Types: Factual, Cross-Period, Cross-Company, Risks, Unanswerable)"]
-        Benchmark --> EvalReport["Live Eval Report (MRR, Recall@k, Grounding, Abstention)"]
+    subgraph Eval ["4 · Evaluation"]
+        N5 --> Bench["59-question benchmark"] --> Report["EVAL_REPORT.md + data/eval_results.json"]
     end
 ```
+
+</details>
 
 ---
 
-## Interactive Workflow Demo
+## 🏢 What it covers
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│  AlphaLens Research Terminal - LangGraph State Orchestrator                            │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  analyst@alphalens:~$ curl -X POST /api/v1/ask                                         │
-│    -d '{"query": "Compare Azure vs AWS enterprise AI growth", "method": "hybrid"}'     │
-│                                                                                        │
-│  [Node 1: Query Router] Identified entities: [MSFT, AMZN] | cross_company_comparison   │
-│  [Node 2: Retrieval]    Balanced dual-lane retrieval (BM25 + kNN, RRF fused):          │
-│    ├── [c-msft-7a1] MSFT 10-K Item 7 (MD&A) - Azure enterprise revenue acceleration    │
-│    └── [c-amzn-9b4] AMZN 10-K Item 7 (MD&A) - AWS multi-billion enterprise AI adoption │
-│                                                                                        │
-│  [Node 4: Claude Gen]   Synthesized response citing passages:                          │
-│    "Microsoft reported Azure revenue growth accelerated by AI services [c-msft-7a1],   │
-│     while Amazon highlighted AWS Bedrock enterprise expansion [c-amzn-9b4]."           │
-│                                                                                        │
-│  [Node 5: Verifier]     ✓ Verified 2/2 citations exist in retrieved set (100% correct) │
-│  [Audit Guard]          ✓ Verbatim Quote Integrity Passed | 31ms Latency | $0 API Cost │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
+**10 companies across 3 sectors** (configured in [`config/companies.yaml`](config/companies.yaml)):
 
----
-
-## Key Features
-
-1. **Section-Aware SEC Parsing**:
-   - Detects canonical item boundaries for **10-K / 10-Q** (`Item 1A Risk Factors`, `Item 7 MD&A`, `Item 7A`, `Item 8`, `Item 1C Cybersecurity`) and **8-K** (`2.02 Earnings`, `5.02 Executive Changes`, `1.01 Material Agreements`, `2.01 M&A`).
-   - Strict chunking strictly *within* section boundaries; never splits across sections.
-2. **Hallucination-Guarded Extraction**:
-   - Claude-based structured extraction for corporate financial events and business risk taxonomies.
-   - **Verbatim Quote Guard**: Rejects and logs any extraction whose supporting sentence does not exist word-for-word in the underlying filing chunk.
-3. **Multi-Strategy Hybrid Retrieval**:
-   - BM25 lexical keyword search, dense semantic kNN vector search, and Reciprocal Rank Fusion (RRF).
-   - Metadata-filtered search (ticker, form type, fiscal period, section name).
-4. **LangGraph Research State Machine**:
-   - Balanced multi-company query routing (retrieves separately per company to prevent dominant capitalization bias).
-   - Automated citation verification node that maps bracketed `[chunk_id]` tags back to source URL, period, and character offsets.
-   - Refusal on speculative or unanswerable queries.
-5. **Zero-API-Cost Local Mode**:
-   - Runs 100% locally with open-source tools: local `sentence-transformers` embedding, in-memory hybrid search, and deterministic offline mock fallbacks for testing and evaluation without incurring API fees.
-
----
-
-## Reproducible Benchmark Results
-
-*The following metrics were computed directly on the 59-question human-verified evaluation dataset using `make eval`:*
-
-### 1. Retrieval Strategy Benchmark (BM25 vs. Semantic vs. Hybrid)
-
-```mermaid
-gantt
-    title Retrieval Recall@10 Score Comparison
-    dateFormat X
-    axisFormat %s%%
-    section BM25 Lexical
-    100% Recall : 0, 100
-    section Semantic kNN
-    97.9% Recall : 0, 98
-    section Hybrid (Selected)
-    100% Recall : 0, 100
-```
-
-| Retrieval Method | Recall@5 | Recall@10 | MRR | nDCG@10 |
-| :--- | :--- | :--- | :--- | :--- |
-| **BM25 Lexical** | 1.0000 | 1.0000 | 0.9762 | 2.1103 |
-| **Semantic (kNN Vector)** | 0.9796 | 0.9796 | 0.9796 | 2.1113 |
-| **Hybrid (BM25 + kNN + RRF)** | **0.9796** | **1.0000** | **0.9626** | **2.1026** |
-
-### 2. Generation & Citation Correctness
-
-| Metric | Measured Value | Definition |
+| Technology | Financials & Healthcare | Consumer, Energy & Auto |
 | :--- | :--- | :--- |
-| **Citation Correctness** | **100.0%** (1.00) | Proportion of cited chunk IDs that exist in retrieved evidence set. |
-| **Correct Abstention Rate** | **100.0%** (1.00) | Accurate refusal on unanswerable/speculative questions. |
-| **Factual Grounding Rate** | **66.0%** | Sentences containing explicit verifiable citations to filing passages. |
-| **p50 Latency** | **31 ms** | Median response latency across local workflow execution. |
-| **p95 Latency** | **47 ms** | 95th percentile response latency. |
+| Apple (AAPL) · Microsoft (MSFT) · NVIDIA (NVDA) · Amazon (AMZN) · Meta (META) | JPMorgan Chase (JPM) · Pfizer (PFE) | Tesla (TSLA) · Walmart (WMT) · Exxon Mobil (XOM) |
 
-### 3. Ablation Experiments
+**3 kinds of reports:**
 
-#### A. Chunk Size Tuning
-
-```
-Chunk Size vs Recall & Latency Tradeoff:
-  256 tokens  |  [████████████████████] 84.2% Recall@10  |  180ms Latency
-  512 tokens  |  [███████████████████████] 93.3% (Optimal) |  220ms Latency  <-- Selected
- 1024 tokens  |  [█████████████████████] 88.7% Recall@10  |  310ms Latency
-```
-
-| Chunk Size | Recall@10 | p50 Latency | Factual Grounding |
-| :--- | :--- | :--- | :--- |
-| 256 tokens | 0.842 | 0.18s | 0.91 |
-| **512 tokens (Optimal)** | **0.933** | **0.22s** | **0.96** |
-| 1024 tokens | 0.887 | 0.31s | 0.93 |
-
-#### B. Metadata Filtering Impact
-
-```
-Precision@5 with Metadata Constraints:
-  Metadata Filtering ON   |  [██████████████████████] 88.0% Precision@5  <-- Enforces Ticker + Section
-  Metadata Filtering OFF  |  [███████████████] 61.0% Precision@5        (Unconstrained Search)
-```
-
-| Setting | Recall@10 | Precision@5 | Latency |
-| :--- | :--- | :--- | :--- |
-| **Metadata Filtering ON (Ticker + Section)** | **0.933** | **0.88** | **0.22s** |
-| Metadata Filtering OFF (Unconstrained) | 0.765 | 0.61 | 0.35s |
+| Report | What it is | Coverage |
+| :--- | :--- | :--- |
+| **10-K** | The big yearly report | last 3 years |
+| **10-Q** | The quarterly update | last 6 quarters |
+| **8-K** | "Something important just happened" (earnings, CEO change, big deal) | last 12 months |
 
 ---
 
-## Failure Taxonomy & Engineering Remediation
+## 📊 Results
 
-During the evaluation cycles, failure cases were categorized into four buckets:
-```
-+-------------------------------------------------------------+
-| Category           | Incidents | Root Cause & Fix           |
-+-------------------------------------------------------------+
-| retrieval_error    |     2     | Section mismatch. Relaxed  |
-|                    |           | section filter on retry.   |
-| generation_error   |    42     | Uncited claims in prompt.  |
-|                    |           | Enforced strict regex.     |
-| reasoning_error    |     0     | Conflated periods. Fixed   |
-|                    |           | by sub-query routing.      |
-| extraction_error   |     0     | Hallucination guard filter |
-+-------------------------------------------------------------+
-```
+AlphaLens is tested on **59 hand-checked questions** of five kinds, including 10 trick questions that *can't* be answered from the reports.
 
-1. **Retrieval Error (2 occurrences):** Highly specific financial events in 8-Ks were initially missed because the router filtered only for Item 7 MD&A. **Fix:** Added fallback query relaxation in Node 3 (`reformulate_query`) to widen section boundaries.
-2. **Generation Error:** Paraphrasing introductory remarks without immediate citation bracket. **Fix:** Refined sentence parsing in the judge to distinguish between narrative summaries and factual claims.
-3. **Cross-Period Comparison Bias:** Single unconstrained queries allowed recent fiscal years to drown out historical comparative periods. **Fix:** Implemented isolated sub-query execution where each period is retrieved independently before state fusion.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/question_mix_dark.png">
+    <img src="assets/question_mix.png" alt="Benchmark question types: 15 fact lookups, 12 compare-across-years, 12 compare-two-companies, 10 risk summaries, 10 trick questions" width="680">
+  </picture>
+</p>
+
+### 1. Does it find the right paragraph?
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/retrieval_benchmark_dark.png">
+    <img src="assets/retrieval_benchmark.png" alt="Retrieval comparison: all three methods find the right passage in the top 5 for 95.9% of questions; meaning search ranks it highest (MRR 0.939)" width="720">
+  </picture>
+</p>
+
+**In plain words:** for about **96 out of 100** answerable questions, the right paragraph shows up in the first 5 results, whichever search method is used. *Meaning search* puts it nearest the top most often.
+
+| Search method | Found in top 5 (Recall@5) | Found in top 10 (Recall@10) | How high it ranks (MRR) | Ranking quality (nDCG@10) |
+| :--- | :---: | :---: | :---: | :---: |
+| Keyword (BM25) | 0.959 | 0.959 | 0.908 | 0.914 |
+| **Meaning (embeddings)** | 0.959 | 0.959 | **0.939** | **0.939** |
+| Hybrid (BM25 + embeddings, RRF) | 0.959 | 0.959 | 0.905 | 0.913 |
+
+### 2. Can you trust the answers?
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/answer_quality_dark.png">
+    <img src="assets/answer_quality.png" alt="Answer quality: 100% correct refusals, 97% of citations support their sentence, 81% of sentences grounded, 60% of factual sentences cited" width="680">
+  </picture>
+</p>
+
+| What we measured | Score | Plain meaning |
+| :--- | :---: | :--- |
+| Correct "not enough info" | **100%** | All 10 trick questions were correctly declined. |
+| Citation support | **96.6%** | When a sentence cites a source, that source really says it. |
+| Factual grounding | **81.2%** | Share of sentences backed by the paragraphs that were found. |
+| Citation coverage | **60.1%** | Share of factual sentences that carry a citation. **This is the weakest spot.** |
+| Speed | **31 ms** typical (p50), 32 ms slow-end (p95) | Measured with the free offline answer writer, not a live AI model. |
+| Cost | **$0** per question | Offline mode makes no paid API calls. |
+
+**Is the automatic grader any good?** We compared it against a person on 20 hand-labeled examples ([`data/hand_labeled_grounding_sample.json`](data/hand_labeled_grounding_sample.json)). They agreed on **15 of 20 (75%)**, with Cohen's kappa of **0.50**, which counts as *moderate* agreement. So read the grounding scores as a useful signal, not exact truth.
+
+### 3. Where does it go wrong?
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/failure_breakdown_dark.png">
+    <img src="assets/failure_breakdown.png" alt="Failure breakdown: 26 reasoning errors, 10 writing errors, 4 search errors; 19 questions had no error" width="680">
+  </picture>
+</p>
+
+Search is rarely the problem (4 misses). Most mistakes happen **after** the right facts are found: comparing them badly (26), or writing a sentence without a citation (10). That tells us where to improve next: the answer-writing step, not the search.
 
 ---
 
-## Quickstart & Reproducibility Guide
+## 🔍 Honest notes: what these numbers do and don't mean
 
-### 1. Environment Setup
+Read these before quoting the numbers above.
+
+- **The test text is a small practice set, not the full SEC archive.** The benchmark runs on a hand-written collection of filing-style paragraphs, plus look-alike "distractor" companies (AMD, BAC, GOOGL, RIVN, CVX) to make search harder. See `generate_hardened_evaluation_corpus` in [`src/eval/runner.py`](src/eval/runner.py). Real filings are messier, so expect lower scores on them.
+- **Answers in the benchmark come from the free offline writer, not Claude.** The answer-quality and speed numbers test the pipeline (search → cite → check), not the writing quality of a real AI model. Set `LLM_PROVIDER=claude` with an API key and re-run `make eval` to measure that.
+- **Some experiments aren't measured yet.** The "prompt v1 vs v2" and "Haiku vs Sonnet" rows in [`data/eval_results.json`](data/eval_results.json) are fixed values typed into the runner, not live measurements, so they're left out here.
+- **The chunk-size experiment showed no difference.** The practice paragraphs are short, so 256, 512 and 1024-token settings all produced the same 25 pieces and the same perfect score.
+- **The ticker-filter experiment needs a fix.** With the company filter on, precision@5 came out *lower* (0.21 vs 0.95). The likely cause: the "is this a hit?" check matches by section name and keywords, not company, so another company's paragraph counts as correct when the filter is off.
+- **"Extraction errors = 0" isn't a result.** The grader never assigns that category, so it's left out of the failure chart.
+
+---
+
+## 🚀 Run it yourself
+
+**You need:** Python 3.11+ and Git. Docker is optional (for the full Postgres + OpenSearch setup).
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/alphalens.git
+# 1. Get the code
+git clone https://github.com/samruddhichitnis02/alphalens.git
 cd alphalens
 
-# Create and activate virtual environment
+# 2. Create a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 
-# Install dependencies using uv or pip
+# 3. Install
 pip install uv
 uv pip install -e .
+
+# 4. Settings: the SEC requires a name + email in your User-Agent
+cp .env.example .env               # then edit SEC_USER_AGENT
 ```
 
-### 2. Configure Environment Variables
+| Command | What it does |
+| :--- | :--- |
+| `make test` | Runs the unit tests (`pytest tests/ -v`). |
+| `make eval` | Runs the full 59-question benchmark, rewrites [`EVAL_REPORT.md`](EVAL_REPORT.md) and [`data/eval_results.json`](data/eval_results.json). |
+| `make review` | Opens a small terminal tool to review benchmark questions by hand. |
+| `make run` | Starts the API at <http://localhost:8000> (interactive docs at `/docs`). |
+| `make up` / `make down` | Starts / stops PostgreSQL 16 + OpenSearch 2.13 in Docker. |
+
+> 💡 **No API key? No problem.** With `LLM_PROVIDER=mock`, everything (embeddings, search, answers) runs on your machine for free.
+
+**Refresh the charts and video** after a new `make eval`:
+
 ```bash
-cp .env.example .env
-# Edit .env with your SEC User-Agent (Name & Email required by SEC rules)
-```
-
-### 3. Run the Suite
-```bash
-# Run all unit tests (100% passing)
-make test
-# Or: pytest tests/ -v
-
-# Run the complete benchmark evaluation (reproduces EVAL_REPORT.md)
-make eval
-# Or: python -m src.eval.runner
-
-# Interactive CLI to review and verify benchmark questions
-make review
-# Or: python -m src.eval.review_cli
-
-# Start FastAPI server
-make run
-# Or: uvicorn src.api.main:app --reload --port 8000
-```
-
-### 4. Running with Docker Compose (Production Stack)
-```bash
-# Starts PostgreSQL 16 and OpenSearch 2.13 clusters
-make up
-# Tear down
-make down
+python scripts/generate_charts.py            # reads data/eval_results.json → assets/*.png
+pip install imageio imageio-ffmpeg           # only needed for the MP4
+python scripts/generate_explainer_video.py   # → assets/explainer.gif + .mp4
 ```
 
 ---
 
-## API Endpoints
+## 🔌 API
 
-- `POST /api/v1/ingest/{ticker}`: Ingests, parses, chunks, and extracts filings for a configured company.
-- `GET /api/v1/filings`: Returns all indexed filings with company, accession, and chunk counts.
-- `GET /api/v1/filings/{id}/sections`: Returns parsed item sections and character boundaries.
-- `POST /api/v1/ask`: Executes the LangGraph research workflow.
-  ```json
-  {
-    "query": "Compare Microsoft Azure and Amazon AWS enterprise cloud growth",
-    "retrieval_method": "hybrid",
-    "top_k": 5
-  }
-  ```
+| Method | Endpoint | What it does |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/ingest/{ticker}` | Download, split and index the filings for one company. |
+| `GET` | `/api/v1/filings` | List the filings indexed so far. |
+| `GET` | `/api/v1/filings/{id}/sections` | Show the sections found in one filing. |
+| `POST` | `/api/v1/ask` | Ask a question; get an answer with citations. |
+
+```bash
+curl -X POST http://localhost:8000/api/v1/ask \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Compare Microsoft Azure and Amazon AWS cloud growth", "retrieval_method": "hybrid", "top_k": 5}'
+```
+
+---
+
+## 🗂️ Project layout
+
+```
+alphalens/
+├── src/
+│   ├── edgar/        # 1–2 · download, parse sections, chunk
+│   ├── retrieval/    # 3   · BM25, embeddings, hybrid RRF (local or OpenSearch)
+│   ├── workflow/     # 4–5 · LangGraph: understand → retrieve → check → answer → verify
+│   ├── extraction/   #       structured facts with the verbatim-quote guard
+│   ├── eval/         #       benchmark, metrics, grounding judge, review CLI
+│   ├── api/          #       FastAPI routes
+│   └── db/           #       SQLAlchemy models (Postgres / SQLite)
+├── config/companies.yaml   # the 10 companies covered
+├── data/                   # benchmark questions, eval results, hand-labeled sample
+├── scripts/                # chart + explainer-video generators
+├── tests/                  # pytest suite
+└── EVAL_REPORT.md          # auto-generated by `make eval`
+```
+
+---
+
+## 📖 Mini-glossary
+
+| Term | Simple meaning |
+| :--- | :--- |
+| **SEC / EDGAR** | The US regulator / its free public website of company filings. |
+| **RAG** | *Retrieval-Augmented Generation*: search for facts first, then write the answer from them. |
+| **Chunk** | One small piece of a report (a few paragraphs). |
+| **BM25** | Classic keyword search: scores pieces by matching words. |
+| **Embeddings** | Turning text into numbers so similar *meanings* land close together. |
+| **RRF** | *Reciprocal Rank Fusion*: a simple way to merge two ranked lists into one. |
+| **Recall@k** | "Was a right answer somewhere in the top *k* results?" |
+| **MRR** | "How close to the top was the first right answer?" (1.0 = always first.) |
+| **nDCG@10** | Overall ranking quality of the top 10, rewarding right answers near the top. |
+| **Abstention** | Choosing to say "I don't know" instead of guessing. |
+| **Cohen's kappa** | Agreement between two graders, corrected for lucky guesses (0 = chance, 1 = perfect). |
