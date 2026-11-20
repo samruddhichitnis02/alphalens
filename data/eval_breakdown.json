@@ -1,0 +1,76 @@
+{
+  "by_question_type": {
+    "factual_lookup": {
+      "n": 15,
+      "Recall@5": 1.0,
+      "MRR": 0.9667,
+      "Factual Grounding": 0.9,
+      "Citation Coverage": 0.6245,
+      "Correct Abstention": null,
+      "failures": {
+        "none": 5,
+        "reasoning_error": 7,
+        "generation_error": 2,
+        "retrieval_error": 1
+      }
+    },
+    "cross_period_comparison": {
+      "n": 12,
+      "Recall@5": 1.0,
+      "MRR": 1.0,
+      "Factual Grounding": 0.8611,
+      "Citation Coverage": 0.6306,
+      "Correct Abstention": null,
+      "failures": {
+        "reasoning_error": 8,
+        "none": 2,
+        "retrieval_error": 1,
+        "generation_error": 1
+      }
+    },
+    "cross_company_comparison": {
+      "n": 12,
+      "Recall@5": 0.8333,
+      "MRR": 0.7361,
+      "Factual Grounding": 0.8361,
+      "Citation Coverage": 0.5194,
+      "Correct Abstention": null,
+      "failures": {
+        "none": 1,
+        "generation_error": 2,
+        "reasoning_error": 7,
+        "retrieval_error": 2
+      }
+    },
+    "risk_summary": {
+      "n": 10,
+      "Recall@5": 1.0,
+      "MRR": 0.9,
+      "Factual Grounding": 0.5933,
+      "Citation Coverage": 0.6267,
+      "Correct Abstention": null,
+      "failures": {
+        "reasoning_error": 4,
+        "generation_error": 5,
+        "none": 1
+      }
+    },
+    "unanswerable": {
+      "n": 10,
+      "Recall@5": null,
+      "MRR": null,
+      "Factual Grounding": null,
+      "Citation Coverage": null,
+      "Correct Abstention": 1.0,
+      "failures": {
+        "none": 10
+      }
+    }
+  },
+  "judge_confusion": {
+    "human_yes_judge_yes": 8,
+    "human_yes_judge_no": 3,
+    "human_no_judge_yes": 2,
+    "human_no_judge_no": 7
+  }
+}
