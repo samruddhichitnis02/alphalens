@@ -18,10 +18,10 @@ class Settings(BaseSettings):
     SEC_MAX_REQUESTS_PER_SECOND: float = 8.0
     DATA_CACHE_DIR: Path = BASE_DIR / "data" / "raw_filings"
 
-    # Database
-    DATABASE_URL: str = f"sqlite+aiosqlite:///{BASE_DIR}/data/alphalens.db"
+    # Production Database (PostgreSQL 16) - Default run path
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alphalens"
 
-    # OpenSearch
+    # Production OpenSearch (BM25 + kNN HNSW) - Default run path
     OPENSEARCH_HOST: str = "http://localhost:9200"
     OPENSEARCH_INDEX: str = "alphalens-filing-chunks"
     OPENSEARCH_USERNAME: Optional[str] = None

@@ -13,6 +13,7 @@ from src.edgar.parser import EdgarParser
 from src.edgar.chunker import SectionAwareChunker
 from src.extraction.extractor import ExtractorService
 from src.retrieval.local_hybrid_retriever import LocalHybridRetriever
+from src.retrieval.opensearch_retriever import OpenSearchRetriever
 from src.retrieval.base import BaseRetriever
 from src.workflow.graph import ResearchWorkflow
 from src.api.schemas import IngestResponse, FilingResponse, SectionResponse, AskRequest, AskResponse, CitationOutput
@@ -21,8 +22,18 @@ from src.utils.logger import get_logger
 logger = get_logger("api.routes")
 router = APIRouter()
 
-# Global in-process retriever instance (can be swapped with OpenSearchRetriever if OpenSearch is up)
-active_retriever: BaseRetriever = LocalHybridRetriever()
+# Default Production Run Path uses OpenSearch (with local fallback if cluster is offline)
+def get_default_retriever() -> BaseRetriever:
+    try:
+        os_retriever = OpenSearchRetriever()
+        if os_retriever.client.ping():
+            logger.info("Connected to OpenSearch cluster as default retrieval backend.")
+            return os_retriever
+    except Exception as e:
+        logger.warning(f"OpenSearch ping failed ({e}). Defaulting to LocalHybridRetriever fallback.")
+    return LocalHybridRetriever()
+
+active_retriever: BaseRetriever = get_default_retriever()
 edgar_client = EdgarClient()
 edgar_parser = EdgarParser()
 chunker = SectionAwareChunker()
