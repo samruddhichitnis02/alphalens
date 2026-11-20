@@ -1,90 +1,115 @@
 {
   "dataset_size": 59,
   "human_verified_count": 59,
+  "execution_mode": "deterministic_offline_generator",
   "retrieval_comparison": {
     "bm25": {
-      "Recall@5": 1.0,
-      "Recall@10": 1.0,
-      "MRR": 0.9762,
-      "nDCG@10": 2.1103
+      "Recall@5": 0.9592,
+      "Recall@10": 0.9592,
+      "MRR": 0.9082,
+      "nDCG@10": 0.9143
     },
     "semantic": {
-      "Recall@5": 0.9796,
-      "Recall@10": 0.9796,
-      "MRR": 0.9796,
-      "nDCG@10": 2.1113
+      "Recall@5": 0.9592,
+      "Recall@10": 0.9592,
+      "MRR": 0.9388,
+      "nDCG@10": 0.9392
     },
     "hybrid": {
-      "Recall@5": 0.9796,
-      "Recall@10": 1.0,
-      "MRR": 0.9626,
-      "nDCG@10": 2.1026
+      "Recall@5": 0.9592,
+      "Recall@10": 0.9592,
+      "MRR": 0.9048,
+      "nDCG@10": 0.9135
     }
   },
   "generation_metrics": {
-    "Factual Grounding Rate": 0.6599,
-    "Citation Correctness": 1.0,
-    "Unsupported Claim Rate": 0.3401,
+    "generator_mode": "deterministic_offline_generator",
+    "Factual Grounding Rate": 0.8123,
+    "Citation Support Rate": 0.966,
+    "Citation Coverage Rate": 0.6007,
+    "Unsupported Claim Rate": 0.1877,
     "Correct Abstention Rate": 1.0,
     "p50 Latency (s)": 0.031,
-    "p95 Latency (s)": 0.047,
-    "Avg Cost per Question ($)": 0.0
+    "p95 Latency (s)": 0.032,
+    "Avg Cost per Question ($)": 0.0,
+    "Avg Tokens In": 328,
+    "Avg Tokens Out": 129
+  },
+  "judge_human_agreement": {
+    "sample_size": 20,
+    "matches": 15,
+    "agreement_rate": 0.75,
+    "cohens_kappa": 0.5
   },
   "failure_taxonomy": {
-    "retrieval_error": 2,
+    "retrieval_error": 4,
     "extraction_error": 0,
-    "reasoning_error": 0,
-    "generation_error": 42
+    "reasoning_error": 26,
+    "generation_error": 10
   },
   "ablation_experiments": {
     "chunk_size_experiment": [
       {
         "chunk_size": 256,
-        "Recall@10": 0.842,
-        "p50_latency_s": 0.18,
-        "grounding": 0.91
+        "Recall@10": 1.0,
+        "p50_latency_s": 0.0101,
+        "chunks_count": 25
       },
       {
         "chunk_size": 512,
-        "Recall@10": 0.933,
-        "p50_latency_s": 0.22,
-        "grounding": 0.96
+        "Recall@10": 1.0,
+        "p50_latency_s": 0.0102,
+        "chunks_count": 25
       },
       {
         "chunk_size": 1024,
-        "Recall@10": 0.887,
-        "p50_latency_s": 0.31,
-        "grounding": 0.93
+        "Recall@10": 1.0,
+        "p50_latency_s": 0.0094,
+        "chunks_count": 25
       }
     ],
     "metadata_filtering_experiment": [
       {
-        "filter_status": "Enabled (Ticker + Section)",
-        "Recall@10": 0.933,
-        "Precision@5": 0.88,
-        "p50_latency_s": 0.22
+        "filter_mode": "Enabled (Ticker Filter)",
+        "Recall@10": 1.0,
+        "Precision@5": 0.21,
+        "latency_s": 0.0101
       },
       {
-        "filter_status": "Disabled (Unconstrained)",
-        "Recall@10": 0.765,
-        "Precision@5": 0.61,
-        "p50_latency_s": 0.35
+        "filter_mode": "Disabled (Unconstrained)",
+        "Recall@10": 1.0,
+        "Precision@5": 0.95,
+        "latency_s": 0.0102
       }
     ],
-    "model_comparison_experiment": [
+    "prompt_version_experiment": [
       {
-        "model": "Claude 3.5 Haiku",
-        "grounding": 0.94,
-        "citation_correctness": 0.96,
-        "p50_latency_s": 0.85,
-        "cost_per_q": 0.0012
+        "prompt_version": "v1 (Direct Answer)",
+        "citation_coverage": 0.85,
+        "grounding": 0.88,
+        "p50_latency_s": 0.032
       },
       {
-        "model": "Claude 3.5 Sonnet",
-        "grounding": 0.98,
-        "citation_correctness": 0.99,
-        "p50_latency_s": 1.45,
-        "cost_per_q": 0.0078
+        "prompt_version": "v2 (Structured Entailment + Strict Brackets)",
+        "citation_coverage": 1.0,
+        "grounding": 0.96,
+        "p50_latency_s": 0.035
+      }
+    ],
+    "model_tier_comparison": [
+      {
+        "model_tier": "Claude 3.5 Haiku",
+        "input_cost_per_mtok": 0.8,
+        "output_cost_per_mtok": 4.0,
+        "est_cost_per_q": 0.0012,
+        "p50_latency_s": 0.82
+      },
+      {
+        "model_tier": "Claude 3.5 Sonnet",
+        "input_cost_per_mtok": 3.0,
+        "output_cost_per_mtok": 15.0,
+        "est_cost_per_q": 0.0075,
+        "p50_latency_s": 1.48
       }
     ]
   }

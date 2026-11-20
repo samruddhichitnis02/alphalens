@@ -1,0 +1,143 @@
+[
+  {
+    "id": "HL-001",
+    "claim": "Apple's Services revenue reached an all-time record in fiscal 2023.",
+    "passage": "Services net sales reached an all-time record of $85.2 billion in fiscal 2023, driven by growth in advertising, cloud and payment services.",
+    "human_label": true,
+    "rationale": "Direct verbatim support in passage."
+  },
+  {
+    "id": "HL-002",
+    "claim": "Apple iPhone revenue grew 25% year-over-year in Greater China.",
+    "passage": "Net sales in Greater China decreased 2% during 2023, primarily reflecting lower net sales of iPhone and Mac.",
+    "human_label": false,
+    "rationale": "Passage directly contradicts claim (revenue decreased 2%, not grew 25%)."
+  },
+  {
+    "id": "HL-003",
+    "claim": "Microsoft's Intelligent Cloud segment includes Azure and Windows Server products.",
+    "passage": "Intelligent Cloud consists of our public, private, and hybrid server products and cloud services including Microsoft Azure, Windows Server, SQL Server, and GitHub.",
+    "human_label": true,
+    "rationale": "Explicitly named in segment definition."
+  },
+  {
+    "id": "HL-004",
+    "claim": "Microsoft completed the acquisition of Activision Blizzard in fiscal 2022.",
+    "passage": "On January 18, 2022, Microsoft announced its agreement to acquire Activision Blizzard, Inc. The acquisition closed on October 13, 2023 (fiscal 2024).",
+    "human_label": false,
+    "rationale": "Passage says the deal was announced in 2022 but closed in fiscal 2024."
+  },
+  {
+    "id": "HL-005",
+    "claim": "NVIDIA's Data Center revenue expansion was primarily driven by the Hopper GPU architecture.",
+    "passage": "Data Center revenue grew significantly, led by our NVIDIA HGX platform based on the Hopper architecture for generative AI workloads.",
+    "human_label": true,
+    "rationale": "Hopper architecture explicitly credited for Data Center expansion."
+  },
+  {
+    "id": "HL-006",
+    "claim": "NVIDIA halted all research and development for autonomous vehicle platforms.",
+    "passage": "Automotive revenue was $1.1 billion, up 21%, reflecting growth in self-driving platforms and AI cockpit solutions.",
+    "human_label": false,
+    "rationale": "Passage confirms automotive/self-driving grew 21%, contradicting the claim."
+  },
+  {
+    "id": "HL-007",
+    "claim": "Amazon transitioned from a single national fulfillment network to eight regionalized fulfillment hubs.",
+    "passage": "During 2023, we re-architected our fulfillment network from a single national fulfillment network to eight distinct, regionalized model networks.",
+    "human_label": true,
+    "rationale": "Directly matches network restructuring details."
+  },
+  {
+    "id": "HL-008",
+    "claim": "AWS experienced negative operating income margins in the latest fiscal year.",
+    "passage": "AWS operating income was $24.6 billion compared to $22.8 billion in the prior year, generating an operating margin of 27.1%.",
+    "human_label": false,
+    "rationale": "Operating margin was positive 27.1% ($24.6B profit)."
+  },
+  {
+    "id": "HL-009",
+    "claim": "Tesla recorded $1.79 billion from sales of automotive regulatory credits in 2023.",
+    "passage": "Automotive regulatory credits revenue was $1.79 billion in 2023 compared to $1.78 billion in 2022.",
+    "human_label": true,
+    "rationale": "Exact figure confirmed."
+  },
+  {
+    "id": "HL-010",
+    "claim": "Tesla ceased vehicle production at Gigafactory Shanghai due to local environmental bans.",
+    "passage": "Gigafactory Shanghai continues to serve as our primary export hub, running at high capacity throughout the reporting period.",
+    "human_label": false,
+    "rationale": "Shanghai factory ran at high capacity; no cessation occurred."
+  },
+  {
+    "id": "HL-011",
+    "claim": "JPMorgan Chase maintained a CET1 capital ratio of 15.0% at year-end.",
+    "passage": "The Firm's Basel III Common Equity Tier 1 (CET1) capital ratio was 15.0% under the Standardized Approach at December 31, 2023.",
+    "human_label": true,
+    "rationale": "Exact capital ratio supported."
+  },
+  {
+    "id": "HL-012",
+    "claim": "JPMorgan reported zero credit loss allowances across consumer credit card loans.",
+    "passage": "The allowance for credit losses for consumer loans was $10.8 billion, reflecting anticipated credit card charge-offs.",
+    "human_label": false,
+    "rationale": "Passage states allowance was $10.8 billion, not zero."
+  },
+  {
+    "id": "HL-013",
+    "claim": "Meta's Reality Labs incurred an operating loss exceeding $16 billion in 2023.",
+    "passage": "Reality Labs segment operating loss was $16.12 billion in 2023 compared to $13.72 billion in 2022.",
+    "human_label": true,
+    "rationale": "Supported by the $16.12B reported loss."
+  },
+  {
+    "id": "HL-014",
+    "claim": "Meta generated more revenue from Reality Labs hardware than Family of Apps advertising.",
+    "passage": "Family of Apps revenue accounted for approximately 98% of total revenue, primarily consisting of advertising.",
+    "human_label": false,
+    "rationale": "Family of Apps ad revenue was 98% of total revenue."
+  },
+  {
+    "id": "HL-015",
+    "claim": "ExxonMobil upstream earnings declined year-over-year primarily due to lower natural gas and crude oil prices.",
+    "passage": "Upstream earnings were $21.3 billion, down $15.2 billion from 2022, driven primarily by lower natural gas realisations and crude prices.",
+    "human_label": true,
+    "rationale": "Explicitly stated as primary earnings driver."
+  },
+  {
+    "id": "HL-016",
+    "claim": "ExxonMobil eliminated all long-term debt from its balance sheet.",
+    "passage": "Total debt at year-end was $41.5 billion, representing a debt-to-capital ratio of 16%.",
+    "human_label": false,
+    "rationale": "ExxonMobil had $41.5 billion in debt."
+  },
+  {
+    "id": "HL-017",
+    "claim": "Pfizer's Paxlovid and Comirnaty sales declined sharply compared to 2022 peaks.",
+    "passage": "Global revenues from Comirnaty and Paxlovid declined $46.8 billion or 78% operational, as expected following unprecedented pandemic demand.",
+    "human_label": true,
+    "rationale": "Directly supports the sharp decline."
+  },
+  {
+    "id": "HL-018",
+    "claim": "Pfizer acquired Seagen Inc. for $43 billion to expand its oncology pipeline.",
+    "passage": "On December 14, 2023, Pfizer completed its acquisition of Seagen Inc. for approximately $43 billion, adding industry-leading ADC cancer therapies.",
+    "human_label": true,
+    "rationale": "Transaction details and strategic purpose verified."
+  },
+  {
+    "id": "HL-019",
+    "claim": "Walmart U.S. eCommerce sales were flat with 0% growth in the fiscal year.",
+    "passage": "Walmart U.S. eCommerce sales grew 17% in the fiscal year, driven by strength in store-fulfilled pickup and delivery.",
+    "human_label": false,
+    "rationale": "Passage says eCommerce grew 17%, directly contradicting 0% growth."
+  },
+  {
+    "id": "HL-020",
+    "claim": "Walmart operated over 10,500 stores and clubs across 19 countries at fiscal year-end.",
+    "passage": "As of January 31, 2024, Walmart operated approximately 10,616 stores and clubs in 19 countries under 46 banners.",
+    "human_label": true,
+    "rationale": "Over 10,500 stores in 19 countries matches approximately 10,616."
+  }
+]
+

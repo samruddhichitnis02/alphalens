@@ -39,14 +39,41 @@ class RetrievalMetricsCalculator:
         return 0.0
 
     @classmethod
-    def ndcg_at_k(cls, retrieved: List[Dict[str, Any]], gold_sections: List[str], gold_keywords: List[str], k: int) -> float:
+    def ndcg_at_k(
+        cls,
+        retrieved: List[Dict[str, Any]],
+        gold_sections: List[str],
+        gold_keywords: List[str],
+        k: int = 10,
+        total_relevant: int = None
+    ) -> float:
+        """
+        Calculates Normalized Discounted Cumulative Gain (nDCG@k).
+        Strictly bounded in [0.0, 1.0].
+        IDCG is computed from the total number of relevant documents that could be ranked in top-k.
+        """
         top_k = retrieved[:k]
-        dcg = 0.0
-        for i, chunk in enumerate(top_k):
-            rel = 1.0 if cls.is_hit(chunk, gold_sections, gold_keywords) else 0.0
-            dcg += rel / math.log2(i + 2)
-        
-        # Ideal DCG for binary relevance with 1 hit at position 0
-        idcg = 1.0 / math.log2(2)
-        return dcg / idcg if idcg > 0 else 0.0
+        if not top_k:
+            return 0.0
+
+        relevances = [
+            1.0 if cls.is_hit(chunk, gold_sections, gold_keywords) else 0.0
+            for chunk in top_k
+        ]
+
+        dcg = sum(rel / math.log2(idx + 2) for idx, rel in enumerate(relevances))
+        if dcg == 0.0:
+            return 0.0
+
+        # Number of relevant items that could ideally occupy the top ranks
+        hits_found = int(sum(relevances))
+        effective_relevant = total_relevant if (total_relevant is not None and total_relevant > 0) else max(hits_found, 1)
+        ideal_hits = min(effective_relevant, k)
+
+        idcg = sum(1.0 / math.log2(j + 2) for j in range(ideal_hits))
+        if idcg <= 0.0:
+            return 0.0
+
+        score = dcg / idcg
+        return round(float(min(max(score, 0.0), 1.0)), 4)
 
