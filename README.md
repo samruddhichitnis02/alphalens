@@ -19,7 +19,31 @@
 
 Public companies publish long reports with the SEC: yearly (10-K), quarterly (10-Q) and big-news (8-K) filings, often hundreds of pages each. AlphaLens searches them, answers your question in plain English, and **tags every sentence with the paragraph it came from**. If the reports don't contain the answer, it says so.
 
+**Example of the answer format:**
+
+> **Q:** How did Apple's Services revenue change in 2023?
+>
+> **A:** Services net sales reached a record $85.2 billion, up 9%, driven by advertising, cloud services and the App Store `[AAPL 10-K, Item 7]`.
+>
+> **Q:** What will Apple's stock price be next year?
+>
+> **A:** The filings don't contain enough information to answer that.
+
+### Why it matters
+
+AI chatbots can sound confident while being wrong. In finance, a made-up number can lead to a bad decision. AlphaLens is built so that **every claim can be traced back to the original report**, and it is measured on how often it gets that right.
+
+### Key features
+
+- **Reads the report the way it's organized.** It splits filings by their official sections (Risk Factors, Management's Discussion, Financial Statements) instead of cutting at random points.
+- **Searches two ways at once.** It matches exact words (like "Azure") and similar meaning (like "cloud revenue"), then merges the two lists.
+- **Fair comparisons.** When you ask about two companies, it searches each one separately so the bigger company doesn't crowd out the smaller one.
+- **No made-up quotes.** Any extracted fact whose quote isn't found word-for-word in the filing is thrown away.
+- **Free to run.** It works fully offline with a local search model. Claude can be switched on for better answers.
+
 ## How it works
+
+Each question goes through five steps. If search finds nothing useful, it tries once more with a looser search, then answers "not enough info" instead of guessing.
 
 ```mermaid
 flowchart LR
@@ -60,12 +84,16 @@ flowchart TD
 
 ## Results at a glance
 
+AlphaLens was tested on 59 questions with known correct answers. Here are the headline numbers. The sections below break them down.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/kpis_dark.png">
   <img src="assets/kpis.png" alt="Headline numbers: 96% right passage in top 5, 97% citations supported, 100% trick questions declined, 31 ms per question, $0 per question">
 </picture>
 
 ### The benchmark: 59 hand-checked questions
+
+The questions cover five kinds of tasks, from simple fact lookups to comparisons. They also include 10 trick questions that the reports can't answer, which test whether the system admits it doesn't know.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/question_mix_dark.png">
@@ -77,12 +105,18 @@ flowchart TD
   <img src="assets/benchmark_coverage.png" alt="Questions per company (AAPL and MSFT 10 each, others 6 to 8) and the filing sections answers come from (MD&A 32, Risk Factors 15)">
 </picture>
 
+All 10 companies are covered. Most answers live in *Management's Discussion & Analysis* (Item 7), where companies explain their results in their own words.
+
 ### Search: does it find the right paragraph?
+
+A good answer starts with finding the right paragraph. We compared three search methods: keyword search, meaning search, and a hybrid of both.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/retrieval_benchmark_dark.png">
   <img src="assets/retrieval_benchmark.png" alt="All three search methods find the right passage in the top 5 for 95.9% of questions; meaning search ranks it highest" width="720">
 </picture>
+
+All three find the right paragraph in the top 5 results for about 96% of questions. Meaning search does slightly better at putting it in **first place**.
 
 ### Answers: can you trust them?
 
@@ -91,10 +125,16 @@ flowchart TD
   <img src="assets/answer_quality.png" alt="100% correct refusals, 97% citations support their sentence, 81% sentences grounded, 60% factual sentences cited" width="640">
 </picture>
 
+When AlphaLens cites a source, the source almost always backs up the sentence (97%), and it never answered a trick question. The weak spot is that only 60% of factual sentences carry a citation at all. That's the next thing to improve.
+
+The grid below shows the same scores split by question type:
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/scores_by_type_dark.png">
   <img src="assets/scores_by_type.png" alt="Heatmap of scores by question type: comparing two companies scores lowest on search (83%) and citations (52%); risk summaries lowest on grounding (59%)" width="720">
 </picture>
+
+Simple lookups and year-over-year comparisons do best. Comparing two companies is hardest, because the system has to find and combine evidence from two different reports.
 
 ### Errors: where does it go wrong?
 
@@ -103,12 +143,18 @@ flowchart TD
   <img src="assets/failure_breakdown.png" alt="Errors by question type: weak comparisons are the most common error, search misses the rarest; all 10 trick questions handled correctly" width="720">
 </picture>
 
+Search is rarely the problem: only 4 misses. Most errors happen **after** the right facts are found, when the answer compares them poorly or leaves out a citation. So the next improvements should go into the answer-writing step, not search.
+
 ### Grader check: does the automatic grader match a human?
+
+The scores above come from an automatic grader. To check the grader itself, a person labeled 20 examples by hand and we compared their labels with the grader's.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/judge_agreement_dark.png">
   <img src="assets/judge_agreement.png" alt="Grader vs human on 20 examples: 15 agree, 5 disagree, kappa 0.50" width="440">
 </picture>
+
+They agree 15 times out of 20. That's good enough to show trends, but not exact, so treat the answer scores as a guide.
 
 <details>
 <summary>Limits of these numbers</summary>
